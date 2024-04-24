@@ -2,13 +2,13 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for
-from flask_migrate import Migrate
-from flask_swagger import swagger
-from flask_cors import CORS
+from flask import Flask, request, jsonify, url_for # type: ignore
+from flask_migrate import Migrate # type: ignore
+from flask_swagger import swagger # type: ignore
+from flask_cors import CORS # type: ignore
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, People, Vehicle, Planet
+from models import db, User, People, Vehicle, Planet, FavoritePeople, FavoritePlanet #, FavoriteVehicle
 #from models import Person
 
 app = Flask(__name__)
@@ -36,71 +36,104 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-# @app.route('/user', methods=['GET'])
-# def handle_hello():
+# enpoints
 
-#     response_body = {
-#         "msg": "Hello, this is your GET /user response "
-#     }
-
-# @app.route('/user', methods=['GET'])
-# def handle_hello():
-
-#     response_body = {
-#         "msg": "Hello, this is your GET /user response "
-#     }
 @app.route('/user', methods=['GET'])
-def get_user():
-    users_query = User.query.all()
-    results_users = list(map(lambda item: item.serialize(), users_query))
+def handle_hello():
+
+    response_body = {
+        "msg": "Hello, this is your GET /user response "
+    }
+    return jsonify(response_body), 200
+
+
+# @app.route('/user', methods=['GET'])
+# def get_user():
+#     users_query = User.query.all()
+#     results_users = list(map(lambda item: item.serialize(), users_query))
     
-    if results_users == []:
-        return jsonify({"msg":"User not found"}), 404
+#     if results_users == []:
+#         return jsonify({"msg":"User not found"}), 404
+#     else:
+#         return jsonify(results_users), 200
+
+# -----------endpoint para obtener todos los personajes--------------
+
+@app.route('/people', methods=['GET'])
+def get_all_people():
+    query_results = People.query.all()
+    print(query_results)
+    # print(results)
+    results = list(map(lambda item: item.serialize(), query_results))
+    
+    if results == []:
+        return jsonify({"msg":"People not found"}), 404
+    
+    response_body = {
+        "msg": "ok",
+        "results": results
+    }
+
+    return jsonify(results), 200
+
+
+@app.route('/planet', methods=['GET'])
+def get_planet():
+    planet_query = Planet.query.all()
+    results_planet = list(map(lambda item: item.serialize(), planet_query))
+    
+    if results_planet == []:
+        return jsonify({"msg":"planet not found"}), 404
     else:
-        return jsonify(results_users), 200
+        return jsonify(results_planet), 200
 
-# @app.route('/people', methods=['GET'])
-# def get_people():
-#     people_query = People.query.all()
-#     results_people = list(map(lambda item: item.serialize(), people_query))
+@app.route('/vehicle', methods=['GET'])
+def get_vehicle():
+    vehicle_query = Vehicle.query.all()
+    results_vehicle = list(map(lambda item: item.serialize(), vehicle_query))
     
-#     if results_people == []:
-#         return jsonify({"msg":"People not found"}), 404
-#     else:
-#         return jsonify(results_people), 200
+    if results_vehicle == []:
+        return jsonify({"msg":"vehicle not found"}), 404
+    else:
+        return jsonify(results_vehicle), 200
+    
 
-# @app.route('/vehicle', methods=['GET'])
-# def get_vehicle():
-#     vehicle_query = Vehicle.query.all()
-#     results_vehicle = list(map(lambda item: item.serialize(), vehicle_query))
-    
-#     if results_vehicle == []:
-#         return jsonify({"msg":"vehicle not found"}), 404
-#     else:
-#         return jsonify(results_vehicle), 200
-    
-# @app.route('/planet', methods=['GET'])
-# def get_planet():
-#     planet_query = Planet.query.all()
-#     results_planet = list(map(lambda item: item.serialize(), planet_query))
-    
-#     if results_planet == []:
-#         return jsonify({"msg":"planet not found"}), 404
-#     else:
-#         return jsonify(results_planet), 200
-    
-# # -------get_por id------
+# # -------endpoints para obtener todos los personajes------
 
-# @app.route('/people/<int:people_id>', methods=['GET'])
-# def get_one_people(people_id):
+@app.route('/people/<int:people_id>', methods=['GET'])
+def get_one_people(people_id):
 
-#     people_query =People.query.filter_by(id=people_id).first()
-#     # print(people_query.serialize())
+    people_query =People.query.filter_by(id=people_id).first()
+    # print(people_query.serialize())
 
-#     if people_query is None:
-#         return jsonify({"msg":"People info not found"}), 404
-#     else:
-#         return jsonify(people_query.serialize()), 200
+    if people_query is None:
+        return jsonify({"msg":"People info not found"}), 404
+    else:
+        return jsonify(people_query.serialize()), 200
+
+@app.route('/planet/<int:planet_id>', methods=['GET'])
+def get_one_planet(planet_id):
+
+    planet_query =Planet.query.filter_by(id=planet_id).first()
+    # print(planet_query.serialize())
+
+    if planet_query is None:
+        return jsonify({"msg":"Planet info not found"}), 404
+    else:
+        return jsonify(planet_query.serialize()), 200
+
+@app.route('/vehicle/<int:vehicle_id>', methods=['GET'])
+def get_one_vehicle(vehicle_id):
+
+    vehicle_query =Vehicle.query.filter_by(id=vehicle_id).first()
+    # print(vehicle_query.serialize())
+
+    if vehicle_query is None:
+        return jsonify({"msg":"Vehicle info not found"}), 404
+    else:
+        return jsonify(vehicle_query.serialize()), 200
+
+# # -------endpoints para obtener usuarios y favoritos------
 
 
 # this only runs if `$ python src/app.py` is executed
