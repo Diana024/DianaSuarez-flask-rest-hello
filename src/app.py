@@ -8,7 +8,7 @@ from flask_swagger import swagger # type: ignore
 from flask_cors import CORS # type: ignore
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, People, Vehicle, Planet, FavoritePeople, FavoritePlanet #, FavoriteVehicle
+from models import db, User, People, Vehicle, Planet, FavoritePeople, FavoritePlanet, FavoriteVehicle
 #from models import Person
 
 app = Flask(__name__)
@@ -45,17 +45,6 @@ def handle_hello():
         "msg": "Hello, this is your GET /user response "
     }
     return jsonify(response_body), 200
-
-
-# @app.route('/user', methods=['GET'])
-# def get_user():
-#     users_query = User.query.all()
-#     results_users = list(map(lambda item: item.serialize(), users_query))
-    
-#     if results_users == []:
-#         return jsonify({"msg":"User not found"}), 404
-#     else:
-#         return jsonify(results_users), 200
 
 # -----------endpoint para obtener todos los personajes--------------
 
@@ -135,6 +124,57 @@ def get_one_vehicle(vehicle_id):
 
 # # -------endpoints para obtener usuarios y favoritos------
 
+@app.route('/user', methods=['GET'])
+def get_user():
+    users_query = User.query.all()
+    results_users = list(map(lambda item: item.serialize(), users_query))
+    
+    if results_users == []:
+        return jsonify({"msg":"User not found"}), 404
+    else:
+        return jsonify(results_users), 200
+
+@app.route('/user/favorites', methods=['GET'])
+def get_user_favorites():
+
+    all_favorite_people =FavoritePeople.query.filter_by(usuario_id=1).all() 
+    all_favorite_people_list= list(map(lambda item: item.serialize(), all_favorite_people))
+    all_favorite_planet =FavoritePlanet.query.filter_by(usuario_id=1).all() 
+    all_favorite_planet_list= list(map(lambda item: item.serialize(), all_favorite_planet))
+    all_favorite_vehicle =FavoriteVehicle.query.filter_by(usuario_id=1).all() 
+    all_favorite_vehicle_list= list(map(lambda item: item.serialize(), all_favorite_vehicle))
+
+
+    if all_favorite_people_list == [] and all_favorite_planet_list == [] and all_favorite_vehicle_list:
+        return jsonify({"msg":"User not favorites"}), 404
+    
+    response_body = {
+        "msg": "ok",
+        "results": [
+            all_favorite_people_list,
+            all_favorite_planet_list,
+            all_favorite_vehicle_list
+        ]
+    }
+
+    return jsonify(response_body), 200
+
+# # -------[POST] /favorite/planet/<int:planet_id> Añade un nuevo planet favorito al usuario actual con el id = planet_id.------
+# Extract user_id from the request
+    user_id = request.json.get('user_id')
+
+    # Check if the user exists
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
+
+    # Check if the planet exists
+    planet = Planets.query.get(planet_id)
+    if planet is None:
+        return jsonify({"error": "Planet not found"}), 404
+
+    # Check if the planet is already a favorite for the user
+    existing_favorite = FavoritePlanets.query.filt
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
