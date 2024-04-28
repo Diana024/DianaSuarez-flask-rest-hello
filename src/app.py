@@ -9,10 +9,14 @@ from flask_cors import CORS # type: ignore
 from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, User, People, Vehicle, Planet, FavoritePeople, FavoritePlanet, FavoriteVehicle
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 #from models import Person
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
+
+app.config["JWT_SECRET_KEY"] = "super-secret"
+jwt = JWTManager(app)
 
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
@@ -36,7 +40,30 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-# enpoints
+# endpoints
+@app.route("/signup", methods=["POST"])
+def signup():
+    name = request.json.get("name", None)
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+    user_exist = User.query.filter_by(email=email).first()
+    if user_exist is None: 
+        new_user = User(name=name, email=email, password=password)
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({"msg": "registered user"}), 200
+    else:
+        return jsonify({"msg": "User has already exist"}), 400
+    
+@app.route("/login", methods=["POST"])
+def login():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+    user_exist = User.query.filter_by(email=email).first()
+    if email != user_exist.email or password != user_exist.password:
+        return jsonify({"msg": "Bad email or password"}), 401
+    access_token = create_access_token(identity=email)
+    return jsonify(access_token=access_token)
 
 @app.route('/user', methods=['GET'])
 def handle_hello():
@@ -67,6 +94,7 @@ def get_all_people():
 
 
 @app.route('/planet', methods=['GET'])
+@jwt_required()
 def get_planet():
     planet_query = Planet.query.all()
     results_planet = list(map(lambda item: item.serialize(), planet_query))
@@ -77,6 +105,7 @@ def get_planet():
         return jsonify(results_planet), 200
 
 @app.route('/vehicle', methods=['GET'])
+@jwt_required()
 def get_vehicle():
     vehicle_query = Vehicle.query.all()
     results_vehicle = list(map(lambda item: item.serialize(), vehicle_query))
@@ -161,11 +190,11 @@ def get_user_favorites():
 
 # -------[POST] /favorite/people/<int:planet_id> Añade un nuevo people favorito al usuario actual con el id = people_id.------
 @app.route("/favorite/people/<int:people_id>", methods=["POST"])
-# @jwt_required()
+@jwt_required()
 def add_favorite_people(people_id): 
-    # email = get_jwt_identity()
-    # user_exist = User.query.filter_by(email=email).first()
-    # user_id = user_exist.id
+    email = get_jwt_identity()
+    user_exist = User.query.filter_by(email=email).first()
+    user_id = user_exist.id
     user_id = 1
     people_exist = People.query.filter_by(id=people_id).first()
     if people_exist is None:
@@ -248,15 +277,13 @@ def delete_favorite_people(people_id):
 @app.route("/favorite/planet/<int:planet_id>", methods=["DELETE"])
 # @jwt_required()
 def delete_favorite_planet(planet_id): 
-    # email = get_jwt_identity()
-    # user_exist = User.query.filter_by(email=email).first()
-    # user_id = user_exist.id
-    user_id = 1
+    email = get_jwt_identity()
+    user_exist = User.query.filter_by(email=email).first()
     planet_exist = Planet.query.filter_by(id=planet_id).first()
     if planet_exist is None:
         return ({"msg": "There are not favorites planets"}), 400
     else:
-        exist_favorite_planet = FavoritePlanet.query.filter_by(planet_id=planet_id, usuario_id=user_id).first()
+        exist_favorite_planet = FavoritePlanet.query.filter_by(planet_id=planet_id, usuario_id=user_exist.id).first()
         if exist_favorite_planet:
             db.session.delete(exist_favorite_planet)
             db.session.commit()
@@ -269,15 +296,13 @@ def delete_favorite_planet(planet_id):
 @app.route("/favorite/vehicle/<int:vehicle_id>", methods=["DELETE"])
 # @jwt_required()
 def delete_favorite_vehicle(vehicle_id): 
-    # email = get_jwt_identity()
-    # user_exist = User.query.filter_by(email=email).first()
-    # user_id = user_exist.id
-    user_id = 1
+    email = get_jwt_identity()
+    user_exist = User.query.filter_by(email=email).first()
     vehicle_exist = Vehicle.query.filter_by(id=vehicle_id).first()
     if vehicle_exist is None:
         return ({"msg": "There are not favorites vehicles"}), 400
     else:
-        exist_favorite_vehicle = FavoriteVehicle.query.filter_by(vehicle_id=vehicle_id, usuario_id=user_id).first()
+        exist_favorite_vehicle = FavoriteVehicle.query.filter_by(vehicle_id=vehicle_id, usuario_id=user_exist.id).first()
         if exist_favorite_vehicle:
             db.session.delete(exist_favorite_vehicle)
             db.session.commit()
