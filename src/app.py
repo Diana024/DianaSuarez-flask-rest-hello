@@ -40,9 +40,9 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-# endpoints
-@app.route("/signup", methods=["POST"])
-def signup():
+# endpoints resgistro
+@app.route("/registro", methods=["POST"])
+def registro():
     name = request.json.get("name", None)
     email = request.json.get("email", None)
     password = request.json.get("password", None)
@@ -54,7 +54,7 @@ def signup():
         return jsonify({"msg": "registered user"}), 200
     else:
         return jsonify({"msg": "User has already exist"}), 400
-    
+# endpoints login  
 @app.route("/login", methods=["POST"])
 def login():
     email = request.json.get("email", None)
@@ -64,7 +64,7 @@ def login():
         return jsonify({"msg": "Bad email or password"}), 401
     access_token = create_access_token(identity=email)
     return jsonify(access_token=access_token)
-
+# endpoint usuario
 @app.route('/user', methods=['GET'])
 def handle_hello():
 
@@ -73,7 +73,7 @@ def handle_hello():
     }
     return jsonify(response_body), 200
 
-# -----------endpoint para obtener todos los personajes--------------
+# -----------GET---Endpoint para obtener todos los personajes--------------
 
 @app.route('/people', methods=['GET'])
 def get_all_people():
@@ -94,7 +94,6 @@ def get_all_people():
 
 
 @app.route('/planet', methods=['GET'])
-@jwt_required()
 def get_planet():
     planet_query = Planet.query.all()
     results_planet = list(map(lambda item: item.serialize(), planet_query))
@@ -105,7 +104,6 @@ def get_planet():
         return jsonify(results_planet), 200
 
 @app.route('/vehicle', methods=['GET'])
-@jwt_required()
 def get_vehicle():
     vehicle_query = Vehicle.query.all()
     results_vehicle = list(map(lambda item: item.serialize(), vehicle_query))
@@ -164,13 +162,16 @@ def get_user():
         return jsonify(results_users), 200
 
 @app.route('/user/favorites', methods=['GET'])
+@jwt_required()
 def get_user_favorites():
-
-    all_favorite_people =FavoritePeople.query.filter_by(usuario_id=1).all() 
+    email = get_jwt_identity()
+    user_exist = User.query.filter_by(email=email).first()
+    user_id = user_exist.id
+    all_favorite_people =FavoritePeople.query.filter_by(usuario_id=user_id).all() 
     all_favorite_people_list= list(map(lambda item: item.serialize(), all_favorite_people))
-    all_favorite_planet =FavoritePlanet.query.filter_by(usuario_id=1).all() 
+    all_favorite_planet =FavoritePlanet.query.filter_by(usuario_id=user_id).all() 
     all_favorite_planet_list= list(map(lambda item: item.serialize(), all_favorite_planet))
-    all_favorite_vehicle =FavoriteVehicle.query.filter_by(usuario_id=1).all() 
+    all_favorite_vehicle =FavoriteVehicle.query.filter_by(usuario_id=user_id).all() 
     all_favorite_vehicle_list= list(map(lambda item: item.serialize(), all_favorite_vehicle))
 
 
@@ -211,11 +212,11 @@ def add_favorite_people(people_id):
         
 # -------[POST] /favorite/planet/<int:planet_id> Añade un nuevo planet favorito al usuario actual con el id = planet_id.------
 @app.route("/favorite/planet/<int:planet_id>", methods=["POST"])
-# @jwt_required()
+@jwt_required()
 def add_favorite_planet(planet_id): 
-    # email = get_jwt_identity()
-    # user_exist = User.query.filter_by(email=email).first()
-    # user_id = user_exist.id
+    email = get_jwt_identity()
+    user_exist = User.query.filter_by(email=email).first()
+    user_id = user_exist.id
     user_id = 1
     planet_exist = Planet.query.filter_by(id=planet_id).first()
     if planet_exist is None:
@@ -232,11 +233,11 @@ def add_favorite_planet(planet_id):
         
 # -------[POST] /favorite/planet/<int:vehicle_id> Añade un nuevo vehiculo favorito al usuario actual con el id = vehicle_id.------
 @app.route("/favorite/vehicle/<int:vehicle_id>", methods=["POST"])
-# @jwt_required()
+@jwt_required()
 def add_favorite_vehicle(vehicle_id): 
-    # email = get_jwt_identity()
-    # user_exist = User.query.filter_by(email=email).first()
-    # user_id = user_exist.id
+    email = get_jwt_identity()
+    user_exist = User.query.filter_by(email=email).first()
+    user_id = user_exist.id
     user_id = 1
     vehicle_exist = Vehicle.query.filter_by(id=vehicle_id).first()
     if vehicle_exist is None:
@@ -254,11 +255,11 @@ def add_favorite_vehicle(vehicle_id):
 
 # -------[DELETE] /favorite/people/<int:planet_id> Borra el people favorito al usuario actual con el id = people_id.------
 @app.route("/favorite/people/<int:people_id>", methods=["DELETE"])
-# @jwt_required()
+@jwt_required()
 def delete_favorite_people(people_id): 
-    # email = get_jwt_identity()
-    # user_exist = User.query.filter_by(email=email).first()
-    # user_id = user_exist.id
+    email = get_jwt_identity()
+    user_exist = User.query.filter_by(email=email).first()
+    user_id = user_exist.id
     user_id = 1
     people_exist = People.query.filter_by(id=people_id).first()
     if people_exist is None:
@@ -275,7 +276,7 @@ def delete_favorite_people(people_id):
 
 # -------[DELETE] /favorite/planet/<int:planet_id> Borra el planet favorito al usuario actual con el id = planet_id.------
 @app.route("/favorite/planet/<int:planet_id>", methods=["DELETE"])
-# @jwt_required()
+@jwt_required()
 def delete_favorite_planet(planet_id): 
     email = get_jwt_identity()
     user_exist = User.query.filter_by(email=email).first()
@@ -294,7 +295,7 @@ def delete_favorite_planet(planet_id):
 
 # -------[DELETE] /favorite/vehicle/<int:vehicle_id> Borra el vehiculo favorito al usuario actual con el id = vehicle_id.------
 @app.route("/favorite/vehicle/<int:vehicle_id>", methods=["DELETE"])
-# @jwt_required()
+@jwt_required()
 def delete_favorite_vehicle(vehicle_id): 
     email = get_jwt_identity()
     user_exist = User.query.filter_by(email=email).first()

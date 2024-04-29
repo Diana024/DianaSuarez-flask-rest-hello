@@ -108,10 +108,13 @@ class FavoritePeople(db.Model):
             return '<FavoritePeople %r>' % self.id
 
     def serialize(self):
+            result = FavoritePeople.query.filter_by(id=self.people_name).first()
+            # print(result)
             return {
                 "id": self.id,
-                "user_id": self.id,
-                "people_id": self.people_id, 
+                "people_name": result.serialize()["name"],
+                "user_id": self.user_id
+                
                 # do not serialize the password, its a security breach
             }
 
@@ -128,7 +131,7 @@ class FavoritePlanet(db.Model):
     def serialize(self):
             return {
                 "id": self.id,
-                "user_id": self.id,
+                "user_id": self.userid,
                 "planet_id": self.planet_id, 
                 # do not serialize the password, its a security breach
             }
@@ -146,11 +149,29 @@ class FavoriteVehicle(db.Model):
     def serialize(self):
             return {
                 "id": self.id,
-                "user_id": self.id,
+                "user_id": self.user_id,
                 "vehicle_id": self.vehicle_id, 
                 # do not serialize the password, its a security breach
             }
+    
+# # -------------enpoint vista favoritos ok------------------------------
+# class Favoritos(db.Model):
+#     __tablename__ = 'favoritos'
+#     id = db.Column(db.Integer, primary_key=True)
+#     character_id = db.Column(db.Integer, db.ForeignKey("character.id"), nullabel=False)
+#     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullabel=False)
+    
 
+#     def __repr__(self):
+#             return '<Favoritos %r>' % self.name
+
+#     def serialize(self):
+#             return {
+#                 "id": self.id,
+#                 "character_id": self.character_id,
+#                 "character_id": self.user_id, 
+#                 # do not serialize the password, its a security breach
+#             }
 
 
 #  def to_dict(self):
