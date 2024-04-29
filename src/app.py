@@ -54,7 +54,8 @@ def registro():
         return jsonify({"msg": "registered user"}), 200
     else:
         return jsonify({"msg": "User has already exist"}), 400
-# endpoints login  
+# endpoints login ------------# Cree una ruta para autenticar a sus usuarios y devolver JWT. 
+# La función create_access_token() se utiliza para generar el JWT.
 @app.route("/login", methods=["POST"])
 def login():
     email = request.json.get("email", None)
