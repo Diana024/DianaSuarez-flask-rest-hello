@@ -9,7 +9,7 @@ class People(db.Model):
     name = db.Column(db.String(250),unique=False, nullable=False)
     birth_year = db.Column(db.String(250), unique=False, nullable=False)
     eye_color = db.Column(db.String(250), unique=False, nullable=False)
-    films = db.Column(db.String(250), unique=False, nullable=False)
+    # films = db.Column(db.String(250), unique=False, nullable=False)
     hair_color = db.Column(db.String(250), unique=False, nullable=False)
     favorites_people = db.relationship("FavoritePeople", backref="peoples", lazy=True )
 
@@ -22,7 +22,7 @@ class People(db.Model):
                 "name": self.name,
                 "birth_year": self.birth_year, 
                 "eye_color": self.eye_color,
-                "films": self.films,
+                # "films": self.films,
                 "hair_color":self.hair_color
                 # do not serialize the password, its a security breach
             }
@@ -81,10 +81,10 @@ class User(db.Model):
     name = db.Column(db.String(250), unique=False, nullable=False)
     email = db.Column(db.String(250), unique=True, nullable=False)
     password = db.Column(db.String(250), unique=False, nullable=False)
-    favorites_people = db.relationship("FavoritePeople", backref="user", lazy=True) 
-    favorites_planet = db.relationship("FavoritePlanet", backref="user", lazy=True)
-    favorites_vehicle = db.relationship("FavoriteVehicle", backref="user", lazy=True)
-
+    # favorites_people = db.relationship("FavoritePeople", backref="user", lazy=True) 
+    # favorites_planet = db.relationship("FavoritePlanet", backref="user", lazy=True)
+    # favorites_vehicle = db.relationship("FavoriteVehicle", backref="user", lazy=True)
+    favorite= db.relationship("Favorite", backref="user", lazy=True)
     def __repr__(self):
             return '<User %r>' % self.name
 
@@ -96,7 +96,27 @@ class User(db.Model):
                 # do not serialize the password, its a security breach
             }
     
+class Favorite(db.Model):
+    __tablename__ = 'favorite'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    name = db.Column(db.String(250), unique=False, nullable=False)
+    
 
+    def __repr__(self):
+            return '<Favorite %r>' % self.id
+
+    def serialize(self):
+            # result = Favorite.query.filter_by(id=self.name).first()
+            # print(result)
+            return {
+                "id": self.id,
+                "name": self.name,
+                "usuario_id": self.usuario_id
+                
+                # do not serialize the password, its a security breach
+            }
+    
 class FavoritePeople(db.Model):
     __tablename__ = 'favoritepeople'
     id = db.Column(db.Integer, primary_key=True)

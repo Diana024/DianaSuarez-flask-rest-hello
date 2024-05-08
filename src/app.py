@@ -8,7 +8,7 @@ from flask_swagger import swagger # type: ignore
 from flask_cors import CORS # type: ignore
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, People, Vehicle, Planet, FavoritePeople, FavoritePlanet, FavoriteVehicle
+from models import db, User, People, Vehicle, Planet, FavoritePeople, FavoritePlanet, FavoriteVehicle, Favorite
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 #from models import Person
 
@@ -41,8 +41,8 @@ def sitemap():
     return generate_sitemap(app)
 
 # endpoints resgistro
-@app.route("/registro", methods=["POST"])
-def registro():
+@app.route("/signup", methods=["POST"])
+def signup():
     name = request.json.get("name", None)
     email = request.json.get("email", None)
     password = request.json.get("password", None)
@@ -168,26 +168,46 @@ def get_user_favorites():
     email = get_jwt_identity()
     user_exist = User.query.filter_by(email=email).first()
     user_id = user_exist.id
-    all_favorite_people =FavoritePeople.query.filter_by(usuario_id=user_id).all() 
-    all_favorite_people_list= list(map(lambda item: item.serialize(), all_favorite_people))
-    all_favorite_planet =FavoritePlanet.query.filter_by(usuario_id=user_id).all() 
-    all_favorite_planet_list= list(map(lambda item: item.serialize(), all_favorite_planet))
-    all_favorite_vehicle =FavoriteVehicle.query.filter_by(usuario_id=user_id).all() 
-    all_favorite_vehicle_list= list(map(lambda item: item.serialize(), all_favorite_vehicle))
+    all_favorite= Favorite.query.filter_by(usuario_id= user_id).all()
+    all_favorite_list= list(map(lambda item: item.serialize(), all_favorite))
+    # all_favorite_people =FavoritePeople.query.filter_by(usuario_id=user_id).all() 
+    # all_favorite_people_list= list(map(lambda item: item.serialize(), all_favorite_people))
+    # all_favorite_planet =FavoritePlanet.query.filter_by(usuario_id=user_id).all() 
+    # all_favorite_planet_list= list(map(lambda item: item.serialize(), all_favorite_planet))
+    # all_favorite_vehicle =FavoriteVehicle.query.filter_by(usuario_id=user_id).all() 
+    # all_favorite_vehicle_list= list(map(lambda item: item.serialize(), all_favorite_vehicle))
+    print (all_favorite)
 
-
-    if all_favorite_people_list == [] and all_favorite_planet_list == [] and all_favorite_vehicle_list:
-        return jsonify({"msg":"User not favorites"}), 404
+    # if all_favorite_people_list == [] and all_favorite_planet_list == [] and all_favorite_vehicle_list:
+    #     return jsonify({"msg":"User not favorites"}), 404
     
     response_body = {
         "msg": "ok",
-        "results": [
-            all_favorite_people_list,
-            all_favorite_planet_list,
-            all_favorite_vehicle_list
-        ]
+        "results": all_favorite_list
+            # all_favorite_people_list,
+            # all_favorite_planet_list,
+            # all_favorite_vehicle_list
     }
+    return jsonify(response_body), 200
 
+
+@app.route('/user/favorites', methods=['POST'])
+@jwt_required()
+def add_favorites():
+    email = get_jwt_identity()
+    user_exist = User.query.filter_by(email=email).first()
+    user_id = user_exist.id
+    name = request.json.get("name", None)
+    new_favorite = Favorite(name=name, usuario_id=user_id)
+    db.session.add(new_favorite)
+    db.session.commit()
+
+    print (new_favorite)
+
+    response_body = {
+        "msg": "ok",
+        "results": new_favorite
+    }
     return jsonify(response_body), 200
 
 # -------[POST] /favorite/people/<int:planet_id> Añade un nuevo people favorito al usuario actual con el id = people_id.------
